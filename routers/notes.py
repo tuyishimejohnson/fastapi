@@ -3,12 +3,53 @@ from fastapi import APIRouter
 from time import sleep
 from fastapi import HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
-from app.schemas import NoteCreate
+from app.models import NoteCreate
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from pydantic import BaseModel
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 
 router = APIRouter()
 
 notes = []
+
+engine = create_engine(os.getenv("DATABASE_URL"))
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+
+class NotesCreate(BaseModel):
+    __tablename__ = "notes"
+    id: int = Column(Integer, primary_key=True, index=True)
+    title: str = Column(String, index=True)
+    content: str = Column(String, index=True)
+    created_at: str = Column(String, index=True)
+
+
+Base.metadata.create_all(bind=engine)
+
+
+class NoteCreate(BaseModel):
+    id: int
+    title: str
+    content: str
+    created_at: str
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+get_db()
 
 
 def custom_success_message(message: str):
